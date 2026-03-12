@@ -43,11 +43,11 @@
             </svg>
           </span>
         </button>
-        <div class="lang-switcher" role="group" aria-label="Language selector">
-          <button id="btn-en" class="lang-btn active" onclick="App.setLang('en')" type="button">
+        <div class="lang-switcher" role="group" aria-label="Language selector" onclick="App.toggleLang()">
+          <button id="btn-en" class="lang-btn active" type="button">
             <span aria-hidden="true">🇬🇧</span><span>EN</span>
           </button>
-          <button id="btn-es" class="lang-btn" onclick="App.setLang('es')" type="button">
+          <button id="btn-es" class="lang-btn" type="button">
             <span aria-hidden="true">🇪🇸</span><span>ES</span>
           </button>
         </div>
@@ -101,15 +101,30 @@
 
       <!-- Controls: select all / clear -->
       <div class="panel-block controls-row">
-        <span class="selection-count">
-          <strong id="sel-count">0</strong>
-          <span data-i18n="countries_selected"> countries selected</span>
-        </span>
-        <button class="btn-ghost" id="btn-select-all" data-i18n="btn_select_all">Select all</button>
-        <button class="btn-ghost" id="btn-clear"    data-i18n="btn_clear">Clear all</button>
-        <button class="btn-ghost" id="btn-invert"   data-i18n="btn_invert">Invert</button>
-        <input class="search-box" id="cb-search" type="search"
-               data-i18n-placeholder="search_placeholder" placeholder="Filter…">
+        <div class="controls-top">
+          <span class="selection-count">
+            <strong id="sel-count">0</strong>
+            <span data-i18n="countries_selected"> countries selected</span>
+          </span>
+          <label class="sort-label" for="cb-sort" data-i18n="sort_label">Sort</label>
+          <select id="cb-sort" class="sort-box" aria-label="Sort countries">
+            <option value="name-asc" data-i18n="sort_name_asc">A–Z</option>
+            <option value="name-desc" data-i18n="sort_name_desc">Z–A</option>
+            <option value="hdi-desc" data-i18n="sort_hdi_desc">HDI ↓</option>
+            <option value="hdi-asc" data-i18n="sort_hdi_asc">HDI ↑</option>
+            <option value="year-desc" data-i18n="sort_year_desc">Year ↓</option>
+            <option value="year-asc" data-i18n="sort_year_asc">Year ↑</option>
+          </select>
+        </div>
+        <div class="controls-bottom">
+          <input class="search-box" id="cb-search" type="search"
+                 data-i18n-placeholder="search_placeholder" placeholder="Filter…">
+          <div class="action-group" role="group" aria-label="Selection actions">
+            <button class="btn-ghost" id="btn-select-all" data-i18n="btn_select_all">Select all</button>
+            <button class="btn-ghost" id="btn-invert"   data-i18n="btn_invert">Invert</button>
+            <button class="btn-ghost" id="btn-clear"    data-i18n="btn_clear">Clear all</button>
+          </div>
+        </div>
       </div>
 
       <!-- Checkbox list -->
@@ -122,6 +137,14 @@
         <button id="btn-run" class="btn-primary" data-i18n="btn_run">
           Run Logistic Regression
         </button>
+        <div class="export-row">
+          <button id="btn-export" class="btn-ghost btn-export" data-i18n="btn_export" type="button">
+            Export CSV
+          </button>
+          <button id="btn-export-json" class="btn-ghost btn-export" data-i18n="btn_export_json" type="button">
+            Export JSON
+          </button>
+        </div>
       </div>
 
     </section>
@@ -156,6 +179,9 @@
           <button class="btn-chart-expand" type="button" onclick="UI.openChartModal('scatter')" data-i18n="btn_expand_chart">Expand</button>
         </div>
         <canvas id="regression-chart"></canvas>
+        <p id="scatter-note" class="chart-note" data-i18n="chart_note_scatter">
+          Points are binary outcomes (0/1); the green line is the fitted logistic probability.
+        </p>
       </div>
 
       <!-- ROC chart -->

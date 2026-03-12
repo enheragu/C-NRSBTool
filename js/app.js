@@ -26,6 +26,9 @@ const App = (() => {
     document.getElementById('btn-clear').addEventListener(  'click',  _clearAll);
     document.getElementById('btn-invert').addEventListener( 'click',  _invertAll);
     document.getElementById('btn-run').addEventListener(    'click',  _runRegression);
+    document.getElementById('btn-export').addEventListener( 'click',  _exportCsvReport);
+    document.getElementById('btn-export-json').addEventListener('click', _exportJsonReport);
+    document.getElementById('cb-sort').addEventListener('change', () => UI.syncCheckboxes(_selected));
     document.getElementById('cb-search').addEventListener(  'input',  e =>
       UI.filterCheckboxes(e.target.value)
     );
@@ -116,6 +119,137 @@ const App = (() => {
     UI.showResults(result);
   }
 
+  function _exportCsvReport() {
+    const report = _buildExportReport();
+    if (!report) return;
+
+    const { result, rows } = report;
+    const lines = [];
+    const pushCsvRow = values => {
+      lines.push(values.map(_csvEscape).join(','));
+    };
+
+    pushCsvRow(['section', 'metric', 'value']);
+    pushCsvRow(['summary', 'selected_countries', _selected.size]);
+    pushCsvRow(['summary', 'total_countries_with_hdi', Data.HDI_DATA.length]);
+    pushCsvRow(['summary', 'countries_without_hdi', Data.NO_HDI_DATA.length]);
+
+    if (result.error === 'degenerate') {
+      pushCsvRow(['model', 'status', 'degenerate']);
+    } else {
+      pushCsvRow(['model', 'mean_hdi_selected', result.meanHdiSel.toFixed(6)]);
+      pushCsvRow(['model', 'mean_hdi_not_selected', result.meanHdiNsel.toFixed(6)]);
+      pushCsvRow(['model', 'beta0', result.beta0.toFixed(6)]);
+      pushCsvRow(['model', 'beta1', result.beta1.toFixed(6)]);
+      pushCsvRow(['model', 'odds_ratio_exp_beta1', Math.exp(result.beta1).toFixed(6)]);
+      pushCsvRow(['model', 'std_error_beta1', result.se.toFixed(6)]);
+      pushCsvRow(['model', 'z', result.z.toFixed(6)]);
+      pushCsvRow(['model', 'p_value', result.pValue.toFixed(6)]);
+      pushCsvRow(['model', 'auc', result.auc.toFixed(6)]);
+    }
+
+    lines.push('');
+    pushCsvRow(['country', 'iso3', 'selected', 'hdi', 'year', 'predicted_probability', 'has_hdi_data']);
+
+    for (const row of rows) {
+      const isSelected = _selected.has(row.iso3);
+      const hasHdi = Number.isFinite(row.hdi);
+      let predicted = '';
+      if (hasHdi && result.error !== 'degenerate') {
+        predicted = Regression.sigmoid(result.beta0 + result.beta1 * row.hdi).toFixed(6);
+      }
+
+      pushCsvRow([
+        row.country,
+        row.iso3,
+        isSelected ? '1' : '0',
+        hasHdi ? Number(row.hdi).toFixed(3) : '',
+        row.year ?? '',
+        predicted,
+        hasHdi ? '1' : '0',
+      ]);
+    }
+
+    const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/csv;charset=utf-8;' });
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const filename = `c-nrsbtool-export-${datePart}.csv`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function _exportJsonReport() {
+    const report = _buildExportReport();
+    if (!report) return;
+
+    const payload = {
+      exported_at_utc: new Date().toISOString(),
+      summary: {
+        selected_countries: _selected.size,
+        total_countries_with_hdi: Data.HDI_DATA.length,
+        countries_without_hdi: Data.NO_HDI_DATA.length,
+      },
+      model: report.result,
+      countries: report.rows.map(row => {
+        const hasHdi = Number.isFinite(row.hdi);
+        const predicted = (hasHdi && report.result.error !== 'degenerate')
+          ? Regression.sigmoid(report.result.beta0 + report.result.beta1 * row.hdi)
+          : null;
+        return {
+          country: row.country,
+          iso3: row.iso3,
+          selected: _selected.has(row.iso3),
+          hdi: hasHdi ? row.hdi : null,
+          year: row.year ?? null,
+          predicted_probability: predicted,
+          has_hdi_data: hasHdi,
+        };
+      }),
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], {
+      type: 'application/json;charset=utf-8;',
+    });
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const filename = `c-nrsbtool-export-${datePart}.json`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function _buildExportReport() {
+    if (_selected.size === 0) {
+      alert(I18n.t('export_need_selection'));
+      return null;
+    }
+
+    const result = Regression.analyse(_selected);
+    const rows = [...Data.HDI_DATA, ...Data.NO_HDI_DATA]
+      .slice()
+      .sort((a, b) => String(a.country).localeCompare(String(b.country)));
+
+    return { result, rows };
+  }
+
+  function _csvEscape(value) {
+    const text = String(value ?? '');
+    if (/[",\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  }
+
   // ── Language switcher ─────────────────────────────────────────────
   function setLang(lang) {
     I18n.setLang(lang);
@@ -123,6 +257,11 @@ const App = (() => {
     _refreshMapUnavailableText();
     _refreshThemeButton();
     _renderFooterMeta();
+  }
+
+  function toggleLang() {
+    const next = I18n.getLang() === 'en' ? 'es' : 'en';
+    setLang(next);
   }
 
   function toggleTheme() {
@@ -179,7 +318,7 @@ const App = (() => {
       footerIdea.innerHTML = `${I18n.t('footer_idea_prefix')} <a href="https://fantasmamecanico.wordpress.com/" target="_blank" rel="noopener noreferrer">Alejandro Rujano</a>`;
     }
     if (footerApp) {
-      footerApp.innerHTML = `${I18n.t('footer_app_prefix')} <a href="https://enheragu.github.io/" target="_blank" rel="noopener noreferrer">enheragu.github.io</a>`;
+      footerApp.innerHTML = `${I18n.t('footer_app_prefix')} <a href="https://enheragu.github.io/" target="_blank" rel="noopener noreferrer">Enrique Heredia-Aguado</a>`;
     }
   }
 
@@ -199,5 +338,5 @@ const App = (() => {
   // ── Boot ──────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', init);
 
-  return { setLang, toggleTheme };
+  return { setLang, toggleLang, toggleTheme };
 })();

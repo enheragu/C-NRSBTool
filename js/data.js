@@ -8,6 +8,8 @@
 const Data = (() => {
   const HDI_DATA = [];
   const HDI_BY_ISO3 = {};
+  const NO_HDI_DATA = [];
+  const NO_HDI_BY_ISO3 = {};
   const ALIAS_MAP = new Map();
   let _aliasesByIso3 = {};
 
@@ -159,6 +161,8 @@ const Data = (() => {
 
     HDI_DATA.length = 0;
     Object.keys(HDI_BY_ISO3).forEach(k => delete HDI_BY_ISO3[k]);
+    NO_HDI_DATA.length = 0;
+    Object.keys(NO_HDI_BY_ISO3).forEach(k => delete NO_HDI_BY_ISO3[k]);
 
     for (let i = 1; i < lines.length; i++) {
       const cells = _parseCsvLine(lines[i]);
@@ -183,6 +187,23 @@ const Data = (() => {
     const extraAliases = await _loadAliasesConfig();
     _aliasesByIso3 = extraAliases;
     _buildAliasMap(extraAliases);
+
+    for (const [iso3Raw, aliases] of Object.entries(extraAliases)) {
+      const iso3 = String(iso3Raw || '').toUpperCase().trim();
+      if (!iso3 || HDI_BY_ISO3[iso3]) continue;
+      const names = Array.isArray(aliases) ? aliases.filter(Boolean) : [];
+      const country = names[0] || iso3;
+      const row = {
+        country,
+        iso3,
+        hdi: null,
+        year: null,
+        noData: true,
+      };
+      NO_HDI_DATA.push(row);
+      NO_HDI_BY_ISO3[iso3] = row;
+    }
+    NO_HDI_DATA.sort((a, b) => a.country.localeCompare(b.country));
 
     await _loadMeta();
     _meta.countries = HDI_DATA.length;
@@ -267,7 +288,11 @@ const Data = (() => {
 
   function getCountryLabel(iso3, lang = 'en') {
     const row = HDI_BY_ISO3[iso3];
-    if (!row) return iso3;
+    if (!row) {
+      const noDataRow = NO_HDI_BY_ISO3[iso3];
+      if (!noDataRow) return iso3;
+      return noDataRow.country;
+    }
     if (lang !== 'es') return row.country;
 
     const aliases = Array.isArray(_aliasesByIso3?.[iso3]) ? _aliasesByIso3[iso3] : [];
@@ -285,6 +310,8 @@ const Data = (() => {
   return {
     HDI_DATA,
     HDI_BY_ISO3,
+    NO_HDI_DATA,
+    NO_HDI_BY_ISO3,
     normalize,
     init,
     resolve,

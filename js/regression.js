@@ -104,12 +104,12 @@ const Regression = (() => {
 
     const P = samples.filter(s => s.label === 1).length;
     const N = samples.length - P;
-    const points = [{ fpr: 0, tpr: 0 }];
+    const points = [{ fpr: 0, tpr: 0, threshold: 1 }];
     let tp = 0, fp = 0;
 
-    for (const { label } of scored) {
+    for (const { label, score } of scored) {
       if (label === 1) tp++; else fp++;
-      points.push({ fpr: fp / N, tpr: tp / P });
+      points.push({ fpr: fp / N, tpr: tp / P, threshold: score });
     }
     return points;
   }
@@ -133,7 +133,8 @@ const Regression = (() => {
    * @returns {Object} full result object
    */
   function analyse(selectedIso3) {
-    const samples = Data.HDI_DATA.map(({ iso3, hdi }) => ({
+    const samples = Data.HDI_DATA.map(({ country, iso3, hdi }) => ({
+      country,
       hdi,
       iso3,
       label: selectedIso3.has(iso3) ? 1 : 0,
@@ -153,10 +154,6 @@ const Regression = (() => {
     const { se, z, pValue } = waldTest(samples, beta0, beta1);
     const auc = aucROC(samples, beta0, beta1);
 
-    const hdiValues = Data.HDI_DATA.map(d => d.hdi);
-    const hdiMin = Math.min(...hdiValues);
-    const hdiMax = Math.max(...hdiValues);
-
     return {
       samples,
       n1, n0,
@@ -167,7 +164,7 @@ const Regression = (() => {
       se, z, pValue,
       auc,
       significant: pValue < 0.05,
-      sigmoidCurve: sigmoidCurve(beta0, beta1, hdiMin - 0.02, hdiMax + 0.02),
+      sigmoidCurve: sigmoidCurve(beta0, beta1, 0, 1),
       rocCurve: rocCurve(samples, beta0, beta1),
     };
   }

@@ -166,13 +166,15 @@ const MapView = (() => {
   function _styleFeature(feature) {
     const iso3    = _resolveIso3(feature);
     const entry   = iso3 ? Data.HDI_BY_ISO3[iso3] : null;
+    const noDataEntry = iso3 ? Data.NO_HDI_BY_ISO3[iso3] : null;
     const selected = iso3 ? _selected.has(iso3) : false;
 
     return {
-      fillColor:   selected ? '#58a6ff' : (entry ? hdiColor(entry.hdi) : '#d1d5db'),
-      fillOpacity: selected ? 0.75 : (entry ? 0.80 : 0.35),
-      color:       selected ? '#2563eb' : '#fff',
-      weight:      selected ? 1.5 : 0.6,
+      fillColor:   selected ? '#58a6ff' : (entry ? hdiColor(entry.hdi) : (noDataEntry ? '#9ca3af' : '#d1d5db')),
+      fillOpacity: selected ? 0.75 : (entry ? 0.80 : (noDataEntry ? 0.65 : 0.35)),
+      color:       selected ? '#2563eb' : (noDataEntry ? '#6b7280' : '#fff'),
+      weight:      selected ? 1.5 : (noDataEntry ? 1.1 : 0.6),
+      dashArray:   noDataEntry ? '4 2' : undefined,
     };
   }
 
@@ -181,8 +183,14 @@ const MapView = (() => {
     const entry = iso3 ? Data.HDI_BY_ISO3[iso3] : null;
 
     if (!entry) {
+      const noDataEntry = iso3 ? Data.NO_HDI_BY_ISO3[iso3] : null;
       layer.on('mouseover', () =>
-        layer.bindTooltip(iso3 ?? '—', { sticky: true }).openTooltip()
+        layer.bindTooltip(
+          noDataEntry
+            ? `<strong>${noDataEntry.country}</strong><br>${I18n.t('no_hdi_data')}`
+            : (iso3 ?? '—'),
+          { sticky: true }
+        ).openTooltip()
       );
       return;
     }
