@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="page_title">C-NRSBTool — HDI Logistic Regression</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ── Header ───────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1 data-i18n="site_title">C-NRSBTool</h1>
+        <p class="subtitle" data-i18n="site_subtitle">
+          Explore whether your country list correlates with the Human Development Index
+        </p>
+      </div>
+      <div class="header-controls">
+        <button id="btn-theme" class="theme-toggle" onclick="App.toggleTheme()" aria-label="Toggle theme" title="Toggle theme" aria-pressed="false" type="button">
+          <span class="theme-icon sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <path d="M12 4.75a.75.75 0 0 1 .75-.75h0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h0a.75.75 0 0 1-.75-.75zm0 13a.75.75 0 0 1 .75-.75h0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h0a.75.75 0 0 1-.75-.75zM5.97 6.78a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06L5.97 7.84a.75.75 0 0 1 0-1.06zm9.9 9.9a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06zM4.75 12a.75.75 0 0 1 .75-.75H7a.75.75 0 0 1 0 1.5H5.5a.75.75 0 0 1-.75-.75zm13.5 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H19a.75.75 0 0 1-.75-.75zM6.78 18.03a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 1 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0zm9.9-9.9a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0z"></path>
+              <circle cx="12" cy="12" r="3.75"></circle>
+            </svg>
+          </span>
+          <span class="theme-track" aria-hidden="true">
+            <span class="theme-thumb"></span>
+          </span>
+          <span class="theme-icon moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <path d="M14.5 3.5a.75.75 0 0 1 .92-.73 8.75 8.75 0 1 1-10.65 10.65.75.75 0 0 1 .73-.92A7.25 7.25 0 0 0 14.5 3.5z"></path>
+            </svg>
+          </span>
+        </button>
+        <div class="lang-switcher" role="group" aria-label="Language selector">
+          <button id="btn-en" class="lang-btn active" onclick="App.setLang('en')" type="button">
+            <span aria-hidden="true">🇬🇧</span><span>EN</span>
+          </button>
+          <button id="btn-es" class="lang-btn" onclick="App.setLang('es')" type="button">
+            <span aria-hidden="true">🇪🇸</span><span>ES</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main layout ──────────────────────────────────────────────── -->
+  <div class="content-shell">
+    <section class="intro-panel">
+      <h2 data-i18n="intro_title">About this tool</h2>
+      <p data-i18n="intro_text">
+        This tool helps researchers detect and quantify selection bias in cross-national studies —it may be used to check whether data availability is systematically related to countries' development levels. Thus, it addresses a widespread but often overlooked methodological problem: assuming missing data is random when it may be actually related to national capacity to collect and report statistics.
+      </p>
+    </section>
+
+    <main>
+
+    <!-- Left: Map -->
+    <section class="panel panel-map">
+      <div class="panel-header">
+        <h2 data-i18n="map_title">World Map</h2>
+        <span class="hint" data-i18n="map_hint">Click countries to select / deselect</span>
+      </div>
+      <div id="map"></div>
+      <div class="map-legend">
+        <span data-i18n="legend_low">Low HDI</span>
+        <div class="legend-gradient"></div>
+        <span data-i18n="legend_high">High HDI</span>
+        <span class="legend-selected" data-i18n="legend_selected">■ Selected</span>
+      </div>
+    </section>
+
+    <!-- Right: Selector -->
+    <section class="panel panel-selector">
+
+      <!-- Text input -->
+      <div class="panel-block">
+        <h2 data-i18n="input_title">Enter countries (CSV)</h2>
+        <p class="hint" data-i18n="input_hint">
+          Comma-separated names, codes or ISO-3 codes. E.g.: Spain, USA, DEU, 日本
+        </p>
+        <div class="input-row">
+          <textarea id="country-input" rows="3" data-i18n-placeholder="input_placeholder"
+            placeholder="Spain, Germany, USA, BRA, ..."></textarea>
+          <button id="btn-parse" data-i18n="btn_parse">Add</button>
+        </div>
+        <!-- Error popup -->
+        <div id="parse-errors" class="error-box hidden"></div>
+      </div>
+
+      <!-- Controls: select all / clear -->
+      <div class="panel-block controls-row">
+        <span class="selection-count">
+          <strong id="sel-count">0</strong>
+          <span data-i18n="countries_selected"> countries selected</span>
+        </span>
+        <button class="btn-ghost" id="btn-select-all" data-i18n="btn_select_all">Select all</button>
+        <button class="btn-ghost" id="btn-clear"    data-i18n="btn_clear">Clear all</button>
+        <button class="btn-ghost" id="btn-invert"   data-i18n="btn_invert">Invert</button>
+        <input class="search-box" id="cb-search" type="search"
+               data-i18n-placeholder="search_placeholder" placeholder="Filter…">
+      </div>
+
+      <!-- Checkbox list -->
+      <div class="panel-block checkbox-wrapper">
+        <div id="checkbox-list"></div>
+      </div>
+
+      <!-- Run button -->
+      <div class="panel-block">
+        <button id="btn-run" class="btn-primary" data-i18n="btn_run">
+          Run Logistic Regression
+        </button>
+      </div>
+
+    </section>
+    </main>
+  </div>
+
+  <!-- ── Results ──────────────────────────────────────────────────── -->
+  <section id="results" class="hidden">
+    <h2 data-i18n="results_title">Results</h2>
+
+    <div class="results-grid">
+
+      <!-- Stats card -->
+      <div class="card card-stats">
+        <h3 data-i18n="stats_title">Model Statistics</h3>
+        <table id="stats-table">
+          <thead>
+            <tr>
+              <th data-i18n="th_stat">Statistic</th>
+              <th data-i18n="th_value">Value</th>
+            </tr>
+          </thead>
+          <tbody id="stats-body"></tbody>
+        </table>
+        <p id="stats-interpretation" class="interpretation"></p>
+      </div>
+
+      <!-- Scatter + sigmoid chart -->
+      <div class="card card-chart">
+        <div class="card-headline">
+          <h3 data-i18n="chart_title">HDI vs Selection Probability</h3>
+          <button class="btn-chart-expand" type="button" onclick="UI.openChartModal('scatter')" data-i18n="btn_expand_chart">Expand</button>
+        </div>
+        <canvas id="regression-chart"></canvas>
+      </div>
+
+      <!-- ROC chart -->
+      <div class="card card-roc">
+        <div class="card-headline">
+          <h3 data-i18n="roc_title">ROC Curve</h3>
+          <button class="btn-chart-expand" type="button" onclick="UI.openChartModal('roc')" data-i18n="btn_expand_chart">Expand</button>
+        </div>
+        <canvas id="roc-chart"></canvas>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Error modal ──────────────────────────────────────────────── -->
+  <div id="modal-overlay" class="modal-overlay hidden" onclick="UI.closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3 data-i18n="modal_title">Unrecognised countries</h3>
+      <p data-i18n="modal_intro">The following entries could not be matched:</p>
+      <ul id="modal-list"></ul>
+      <p id="modal-suggestions" class="modal-suggestions"></p>
+      <button class="btn-primary" onclick="UI.closeModal()" data-i18n="modal_close">Close</button>
+    </div>
+  </div>
+
+  <div id="chart-modal-overlay" class="chart-modal-overlay hidden" onclick="UI.closeChartModal()">
+    <div class="chart-modal" onclick="event.stopPropagation()">
+      <div class="chart-modal-head">
+        <h3 id="chart-modal-title"></h3>
+        <button class="btn-ghost" type="button" onclick="UI.closeChartModal()" data-i18n="modal_close">Close</button>
+      </div>
+      <p id="chart-modal-help" class="chart-modal-help" data-i18n="chart_modal_help">
+        Wheel to zoom, drag to pan, double click to reset, Esc to close.
+      </p>
+      <canvas id="chart-modal-canvas"></canvas>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p id="footer-data-updated"></p>
+    <p id="footer-latest-year"></p>
+    <p id="footer-data-source"></p>
+    <div class="footer-credits">
+      <p id="footer-idea-credit"></p>
+      <p id="footer-app-updated"></p>
+    </div>
+  </footer>
+
+  <!-- ── Scripts ──────────────────────────────────────────────────── -->
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/regression.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
