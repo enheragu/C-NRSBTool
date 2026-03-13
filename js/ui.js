@@ -30,13 +30,6 @@ const UI = (() => {
   let _lastResult = null;
   let _modalDefaults = null;
   let _globalHandlersBound = false;
-  let _modalTouchResetHandler = null;
-  let _modalWheelZoomHandler = null;
-  let _modalMouseDownHandler = null;
-  let _modalMouseMoveHandler = null;
-  let _modalMouseUpHandler = null;
-  let _modalTouchStartHandler = null;
-  let _modalTouchMoveHandler = null;
   let _zoomPluginRegistered = false;
 
   function _ensureZoomPluginRegistered() {
@@ -592,269 +585,17 @@ const UI = (() => {
       },
     });
 
-    canvas.ondblclick = () => {
-      if (!_modalChart) return;
-      if (typeof _modalChart.resetZoom === 'function') {
-        _modalChart.resetZoom();
-        return;
-      }
-      if (_modalDefaults) {
-        _modalChart.options.scales.x.min = _modalDefaults.xMin;
-        _modalChart.options.scales.x.max = _modalDefaults.xMax;
-        _modalChart.options.scales.y.min = _modalDefaults.yMin;
-        _modalChart.options.scales.y.max = _modalDefaults.yMax;
-        _modalChart.update('none');
-      }
-    };
-
-    let lastTapTime = 0;
-    let lastTapX = 0;
-    let lastTapY = 0;
-    _modalTouchResetHandler = e => {
-      if (!e.changedTouches || e.changedTouches.length !== 1) return;
-      const now = Date.now();
-      const touch = e.changedTouches[0];
-      const dt = now - lastTapTime;
-      const dx = Math.abs(touch.clientX - lastTapX);
-      const dy = Math.abs(touch.clientY - lastTapY);
-
-      if (dt > 0 && dt < 320 && dx < 24 && dy < 24) {
-        if (_modalChart && typeof _modalChart.resetZoom === 'function') {
-          _modalChart.resetZoom();
-        }
-        e.preventDefault();
-      }
-
-      lastTapTime = now;
-      lastTapX = touch.clientX;
-      lastTapY = touch.clientY;
-    };
-    canvas.addEventListener('touchend', _modalTouchResetHandler, { passive: false });
-
-    _modalWheelZoomHandler = e => {
-      if (!_modalChart) return;
-      e.preventDefault();
-
-      const zoomIn = e.deltaY < 0;
-      const factor = zoomIn ? 0.9 : 1.1;
-      const xScale = _modalChart.scales?.x;
-      const yScale = _modalChart.scales?.y;
-      if (!xScale || !yScale) return;
-
-      const nextX = _nextScaleRange(xScale, factor, e.offsetX, _modalDefaults?.xMin, _modalDefaults?.xMax);
-      const nextY = _nextScaleRange(yScale, factor, e.offsetY, _modalDefaults?.yMin, _modalDefaults?.yMax);
-
-      _modalChart.options.scales.x.min = nextX.min;
-      _modalChart.options.scales.x.max = nextX.max;
-      _modalChart.options.scales.y.min = nextY.min;
-      _modalChart.options.scales.y.max = nextY.max;
-      _modalChart.update('none');
-    };
-    canvas.addEventListener('wheel', _modalWheelZoomHandler, { passive: false });
-
-    let dragActive = false;
-    let lastClientX = 0;
-    let lastClientY = 0;
-    let touchMode = null;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
-    let lastPinchDistance = 0;
-
-    _modalMouseDownHandler = e => {
-      if (!_modalChart || e.button !== 0) return;
-      dragActive = true;
-      lastClientX = e.clientX;
-      lastClientY = e.clientY;
-      canvas.style.cursor = 'grabbing';
-      e.preventDefault();
-    };
-
-    _modalMouseMoveHandler = e => {
-      if (!_modalChart || !dragActive) return;
-      const dx = e.clientX - lastClientX;
-      const dy = e.clientY - lastClientY;
-      lastClientX = e.clientX;
-      lastClientY = e.clientY;
-
-      const xScale = _modalChart.scales?.x;
-      const yScale = _modalChart.scales?.y;
-      if (!xScale || !yScale) return;
-
-      const pxLeft = xScale.left;
-      const pxRight = xScale.right;
-      const pxTop = yScale.top;
-      const pxBottom = yScale.bottom;
-
-      const xSpan = Number(xScale.max) - Number(xScale.min);
-      const ySpan = Number(yScale.max) - Number(yScale.min);
-      const xPxSpan = pxRight - pxLeft;
-      const yPxSpan = pxBottom - pxTop;
-      if (!(xSpan > 0) || !(ySpan > 0) || !(xPxSpan > 0) || !(yPxSpan > 0)) return;
-
-      const dValX = (-dx / xPxSpan) * xSpan;
-      const dValY = (dy / yPxSpan) * ySpan;
-
-      const nextX = _clampedPanRange(
-        Number(xScale.min) + dValX,
-        Number(xScale.max) + dValX,
-        _modalDefaults?.xMin,
-        _modalDefaults?.xMax
-      );
-      const nextY = _clampedPanRange(
-        Number(yScale.min) + dValY,
-        Number(yScale.max) + dValY,
-        _modalDefaults?.yMin,
-        _modalDefaults?.yMax
-      );
-
-      _modalChart.options.scales.x.min = nextX.min;
-      _modalChart.options.scales.x.max = nextX.max;
-      _modalChart.options.scales.y.min = nextY.min;
-      _modalChart.options.scales.y.max = nextY.max;
-      _modalChart.update('none');
-      e.preventDefault();
-    };
-
-    _modalMouseUpHandler = () => {
-      dragActive = false;
-      canvas.style.cursor = '';
-    };
-
-    canvas.addEventListener('mousedown', _modalMouseDownHandler);
-    window.addEventListener('mousemove', _modalMouseMoveHandler);
-    window.addEventListener('mouseup', _modalMouseUpHandler);
-
-    _modalTouchStartHandler = e => {
-      if (!_modalChart) return;
-      if (e.touches.length === 1) {
-        touchMode = 'pan';
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-      } else if (e.touches.length >= 2) {
-        touchMode = 'pinch';
-        lastPinchDistance = _touchDistance(e.touches[0], e.touches[1]);
-      }
-    };
-
-    _modalTouchMoveHandler = e => {
-      if (!_modalChart) return;
-      const xScale = _modalChart.scales?.x;
-      const yScale = _modalChart.scales?.y;
-      if (!xScale || !yScale) return;
-
-      if (touchMode === 'pan' && e.touches.length === 1) {
-        const touch = e.touches[0];
-        const dx = touch.clientX - lastTouchX;
-        const dy = touch.clientY - lastTouchY;
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
-
-        const xSpan = Number(xScale.max) - Number(xScale.min);
-        const ySpan = Number(yScale.max) - Number(yScale.min);
-        const xPxSpan = xScale.right - xScale.left;
-        const yPxSpan = yScale.bottom - yScale.top;
-        if (!(xSpan > 0) || !(ySpan > 0) || !(xPxSpan > 0) || !(yPxSpan > 0)) return;
-
-        const dValX = (-dx / xPxSpan) * xSpan;
-        const dValY = (dy / yPxSpan) * ySpan;
-
-        const nextX = _clampedPanRange(Number(xScale.min) + dValX, Number(xScale.max) + dValX, _modalDefaults?.xMin, _modalDefaults?.xMax);
-        const nextY = _clampedPanRange(Number(yScale.min) + dValY, Number(yScale.max) + dValY, _modalDefaults?.yMin, _modalDefaults?.yMax);
-
-        _modalChart.options.scales.x.min = nextX.min;
-        _modalChart.options.scales.x.max = nextX.max;
-        _modalChart.options.scales.y.min = nextY.min;
-        _modalChart.options.scales.y.max = nextY.max;
-        _modalChart.update('none');
-        e.preventDefault();
-        return;
-      }
-
-      if (e.touches.length >= 2) {
-        const distance = _touchDistance(e.touches[0], e.touches[1]);
-        if (!(distance > 0) || !(lastPinchDistance > 0)) {
-          lastPinchDistance = distance;
-          return;
-        }
-
-        const factor = lastPinchDistance / distance;
-        const rect = canvas.getBoundingClientRect();
-        const centerX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
-        const centerY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
-
-        const nextX = _nextScaleRange(xScale, factor, centerX, _modalDefaults?.xMin, _modalDefaults?.xMax);
-        const nextY = _nextScaleRange(yScale, factor, centerY, _modalDefaults?.yMin, _modalDefaults?.yMax);
-
-        _modalChart.options.scales.x.min = nextX.min;
-        _modalChart.options.scales.x.max = nextX.max;
-        _modalChart.options.scales.y.min = nextY.min;
-        _modalChart.options.scales.y.max = nextY.max;
-        _modalChart.update('none');
-        lastPinchDistance = distance;
-        touchMode = 'pinch';
-        e.preventDefault();
-      }
-    };
-
-    canvas.addEventListener('touchstart', _modalTouchStartHandler, { passive: false });
-    canvas.addEventListener('touchmove', _modalTouchMoveHandler, { passive: false });
-  }
-
-  function _touchDistance(a, b) {
-    const dx = a.clientX - b.clientX;
-    const dy = a.clientY - b.clientY;
-    return Math.hypot(dx, dy);
-  }
-
-  function _clampedPanRange(nextMin, nextMax, clampMin, clampMax) {
-    if (!Number.isFinite(nextMin) || !Number.isFinite(nextMax) || nextMax <= nextMin) {
-      return { min: nextMin, max: nextMax };
-    }
-    if (!Number.isFinite(clampMin) || !Number.isFinite(clampMax) || clampMax <= clampMin) {
-      return { min: nextMin, max: nextMax };
-    }
-
-    const span = nextMax - nextMin;
-    const full = clampMax - clampMin;
-    if (span >= full) return { min: clampMin, max: clampMax };
-
-    if (nextMin < clampMin) {
-      return { min: clampMin, max: clampMin + span };
-    }
-    if (nextMax > clampMax) {
-      return { min: clampMax - span, max: clampMax };
-    }
-    return { min: nextMin, max: nextMax };
-  }
-
-  function _nextScaleRange(scale, factor, pixel, clampMin, clampMax) {
-    const min = Number(scale.min);
-    const max = Number(scale.max);
-    if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
-      return { min, max };
-    }
-
-    const center = Number.isFinite(pixel) ? scale.getValueForPixel(pixel) : ((min + max) / 2);
-    const anchor = Number.isFinite(center) ? center : ((min + max) / 2);
-    let nextMin = anchor - (anchor - min) * factor;
-    let nextMax = anchor + (max - anchor) * factor;
-
-    if (Number.isFinite(clampMin) && Number.isFinite(clampMax)) {
-      const full = clampMax - clampMin;
-      const span = Math.min(nextMax - nextMin, full);
-      if (nextMin < clampMin) {
-        nextMin = clampMin;
-        nextMax = clampMin + span;
-      }
-      if (nextMax > clampMax) {
-        nextMax = clampMax;
-        nextMin = clampMax - span;
-      }
-      nextMin = Math.max(nextMin, clampMin);
-      nextMax = Math.min(nextMax, clampMax);
-    }
-
-    return { min: nextMin, max: nextMax };
+    window.SharedChartInteractions?.attach({
+      canvas,
+      getChart: () => _modalChart,
+      defaults: {
+        xMin: _modalDefaults?.xMin,
+        xMax: _modalDefaults?.xMax,
+        yMin: _modalDefaults?.yMin,
+        yMax: _modalDefaults?.yMax,
+        mode: 'xy',
+      },
+    });
   }
 
   function _formatRocTooltip(raw) {
@@ -877,36 +618,8 @@ const UI = (() => {
     if (overlay) overlay.classList.add('hidden');
     document.body.style.overflow = '';
     if (canvas) {
-      canvas.ondblclick = null;
-      if (_modalTouchResetHandler) {
-        canvas.removeEventListener('touchend', _modalTouchResetHandler);
-      }
-      if (_modalWheelZoomHandler) {
-        canvas.removeEventListener('wheel', _modalWheelZoomHandler);
-      }
-      if (_modalMouseDownHandler) {
-        canvas.removeEventListener('mousedown', _modalMouseDownHandler);
-      }
-      if (_modalTouchStartHandler) {
-        canvas.removeEventListener('touchstart', _modalTouchStartHandler);
-      }
-      if (_modalTouchMoveHandler) {
-        canvas.removeEventListener('touchmove', _modalTouchMoveHandler);
-      }
+      window.SharedChartInteractions?.detach?.(canvas);
     }
-    if (_modalMouseMoveHandler) {
-      window.removeEventListener('mousemove', _modalMouseMoveHandler);
-    }
-    if (_modalMouseUpHandler) {
-      window.removeEventListener('mouseup', _modalMouseUpHandler);
-    }
-    _modalTouchResetHandler = null;
-    _modalWheelZoomHandler = null;
-    _modalMouseDownHandler = null;
-    _modalMouseMoveHandler = null;
-    _modalMouseUpHandler = null;
-    _modalTouchStartHandler = null;
-    _modalTouchMoveHandler = null;
     if (_modalChart) {
       _modalChart.destroy();
       _modalChart = null;

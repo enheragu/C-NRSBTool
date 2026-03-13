@@ -1,0 +1,11 @@
+# Local development aliases / hacks
+assets/shared/
+
+# Python / local server caches
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db

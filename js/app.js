@@ -52,6 +52,7 @@ const App = (() => {
     if (urlLang) setLang(urlLang);
     _applyTheme();
     _renderFooterMeta();
+    _renderRelatedWork();
 
     if (!_savedTheme && window.matchMedia) {
       const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -286,6 +287,7 @@ const App = (() => {
     _refreshMapUnavailableText();
     _refreshThemeButton();
     _renderFooterMeta();
+    _renderRelatedWork();
   }
 
   function toggleLang() {
@@ -350,6 +352,16 @@ const App = (() => {
     if (footerApp) {
       footerApp.innerHTML = `${I18n.t('footer_app_prefix')} <a href="https://enheragu.github.io/" target="_blank" rel="noopener noreferrer">Enrique Heredia-Aguado</a>`;
     }
+  }
+
+  function _renderRelatedWork() {
+    const root = document.getElementById('related-work-root');
+    if (!root || !window.SharedRelatedWork?.init) return;
+    window.SharedRelatedWork.init({
+      container: root,
+      toolId: 'C-NRSBTool',
+      lang: I18n.getLang(),
+    });
   }
 
   function _setMapUnavailable(error) {
