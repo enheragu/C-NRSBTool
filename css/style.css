@@ -448,6 +448,7 @@ main {
   resize: vertical;
   border: 1px solid var(--clr-border);
   border-radius: 4px;
+  background: var(--clr-surface);
   padding: .45rem .6rem;
   font-size: .82rem;
   font-family: inherit;
@@ -455,6 +456,10 @@ main {
   line-height: 1.4;
 }
 .input-row textarea:focus { outline: 2px solid var(--clr-primary); border-color: transparent; }
+
+.input-row textarea::placeholder {
+  color: var(--clr-muted);
+}
 
 /* Error box */
 .error-box {
@@ -509,12 +514,18 @@ main {
   padding: .3rem .55rem;
   border: 1px solid var(--clr-border);
   border-radius: 4px;
+  background: var(--clr-surface);
+  color: var(--clr-text);
   font-size: .8rem;
   min-width: 0;
   width: auto;
   flex: 1 1 0;
 }
 .search-box:focus { outline: 2px solid var(--clr-primary); border-color: transparent; }
+
+.search-box::placeholder {
+  color: var(--clr-muted);
+}
 
 /* Checkbox list */
 .checkbox-wrapper {

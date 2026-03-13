@@ -72,10 +72,11 @@ const Data = (() => {
       }
     }
 
-    for (const [iso3, aliases] of Object.entries(extraAliasConfig)) {
+    for (const [iso3, entry] of Object.entries(extraAliasConfig)) {
       const iso = String(iso3 ?? '').trim().toUpperCase();
-      if (!iso || !HDI_BY_ISO3[iso]) continue;
-      if (!Array.isArray(aliases)) continue;
+      if (!iso) continue;
+      ALIAS_MAP.set(normalize(iso), iso);
+      const aliases = Array.isArray(entry?.aliases) ? entry.aliases : [];
       for (const alias of aliases) {
         ALIAS_MAP.set(normalize(alias), iso);
       }
@@ -186,13 +187,11 @@ const Data = (() => {
 
     const extraAliases = await _loadAliasesConfig();
     _aliasesByIso3 = extraAliases;
-    _buildAliasMap(extraAliases);
 
-    for (const [iso3Raw, aliases] of Object.entries(extraAliases)) {
+    for (const [iso3Raw, entry] of Object.entries(extraAliases)) {
       const iso3 = String(iso3Raw || '').toUpperCase().trim();
       if (!iso3 || HDI_BY_ISO3[iso3]) continue;
-      const names = Array.isArray(aliases) ? aliases.filter(Boolean) : [];
-      const country = names[0] || iso3;
+      const country = String(entry?.display_en || '').trim() || iso3;
       const row = {
         country,
         iso3,
@@ -203,6 +202,7 @@ const Data = (() => {
       NO_HDI_DATA.push(row);
       NO_HDI_BY_ISO3[iso3] = row;
     }
+    _buildAliasMap(extraAliases);
     NO_HDI_DATA.sort((a, b) => a.country.localeCompare(b.country));
 
     await _loadMeta();
@@ -272,39 +272,28 @@ const Data = (() => {
       }
     }
 
-    return bestIso ? (HDI_BY_ISO3[bestIso]?.country ?? null) : null;
+    if (!bestIso) return null;
+    const cfg = _aliasesByIso3?.[bestIso];
+    if (cfg?.display_en) return cfg.display_en;
+    return HDI_BY_ISO3[bestIso]?.country ?? NO_HDI_BY_ISO3[bestIso]?.country ?? null;
   }
 
   function getMeta() {
     return _meta;
   }
 
-  function _looksSpanish(text) {
-    const raw = String(text ?? '');
-    if (/[áéíóúñüÁÉÍÓÚÑÜ]/.test(raw)) return true;
-    const n = normalize(raw);
-    return /(espana|alemania|francia|italia|japon|mexico|argentina|colombia|peru|chile|uruguay|venezuela|ecuador|bolivia|paraguay|republica|reino|estado|santa|san|islas|arab|corea|rusia|turquia|paisesbajos|guineaecuatorial|sudafrica|suiza|suecia|noruega|finlandia|dinamarca|austria|belgica)/.test(n);
-  }
-
   function getCountryLabel(iso3, lang = 'en') {
     const row = HDI_BY_ISO3[iso3];
-    if (!row) {
-      const noDataRow = NO_HDI_BY_ISO3[iso3];
-      if (!noDataRow) return iso3;
-      return noDataRow.country;
-    }
-    if (lang !== 'es') return row.country;
+    const noDataRow = NO_HDI_BY_ISO3[iso3];
+    const fallbackRow = row || noDataRow;
+    const cfg = _aliasesByIso3?.[iso3];
 
-    const aliases = Array.isArray(_aliasesByIso3?.[iso3]) ? _aliasesByIso3[iso3] : [];
-    const englishNorm = normalize(row.country);
+    if (!fallbackRow && !cfg) return iso3;
+    if (lang === 'es' && cfg?.display_es) return cfg.display_es;
+    if (cfg?.display_en) return cfg.display_en;
 
-    for (const alias of aliases) {
-      if (!alias) continue;
-      if (normalize(alias) === englishNorm) continue;
-      if (_looksSpanish(alias)) return alias;
-    }
-
-    return row.country;
+    if (!fallbackRow) return iso3;
+    return fallbackRow.country;
   }
 
   return {
