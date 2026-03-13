@@ -198,10 +198,10 @@
           Run Logistic Regression
         </button>
         <div class="export-row">
-          <button id="btn-export" class="btn-ghost btn-export" data-i18n="btn_export" type="button">
+          <button id="btn-export" class="btn-secondary btn-export" data-i18n="btn_export" type="button">
             Export CSV
           </button>
-          <button id="btn-export-json" class="btn-ghost btn-export" data-i18n="btn_export_json" type="button">
+          <button id="btn-export-json" class="btn-secondary btn-export" data-i18n="btn_export_json" type="button">
             Export JSON
           </button>
         </div>
@@ -236,7 +236,7 @@
       <div class="card card-chart">
         <div class="card-headline">
           <h3 data-i18n="chart_title">HDI vs Selection Probability</h3>
-          <button class="btn-chart-expand" type="button" onclick="UI.openChartModal('scatter')" data-i18n="btn_expand_chart">Expand</button>
+          <button class="btn-outline btn-chart-expand" type="button" onclick="UI.openChartModal('scatter')" data-i18n="btn_expand_chart">Expand</button>
         </div>
         <canvas id="regression-chart"></canvas>
         <p id="scatter-note" class="chart-note" data-i18n="chart_note_scatter">
@@ -248,7 +248,7 @@
       <div class="card card-roc">
         <div class="card-headline">
           <h3 data-i18n="roc_title">ROC Curve</h3>
-          <button class="btn-chart-expand" type="button" onclick="UI.openChartModal('roc')" data-i18n="btn_expand_chart">Expand</button>
+          <button class="btn-outline btn-chart-expand" type="button" onclick="UI.openChartModal('roc')" data-i18n="btn_expand_chart">Expand</button>
         </div>
         <canvas id="roc-chart"></canvas>
       </div>
@@ -271,7 +271,7 @@
     <div class="chart-modal" onclick="event.stopPropagation()">
       <div class="chart-modal-head">
         <h3 id="chart-modal-title"></h3>
-        <button class="btn-ghost" type="button" onclick="UI.closeChartModal()" data-i18n="modal_close">Close</button>
+        <button class="btn-outline btn-chart-close" type="button" onclick="UI.closeChartModal()" data-i18n="modal_close">Close</button>
       </div>
       <p id="chart-modal-help" class="chart-modal-help" data-i18n="chart_modal_help">
         Wheel to zoom, drag to pan, double click to reset, Esc to close.

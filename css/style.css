@@ -277,23 +277,10 @@ body.dark .cb-item:hover { background: #17233a; }
 }
 
 /* ── Buttons ────────────────────────────────────────────────────── */
-.btn-primary {
-  padding: .55rem 1.25rem;
-  font-size: .88rem;
+.panel-block > .btn-primary {
   width: 100%;
-  transition: background .15s, transform .1s;
 }
-.btn-primary:hover   { background: var(--clr-primary-h); }
-.btn-primary:active  { transform: scale(.98); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 
-.btn-ghost {
-  padding: .3rem .65rem;
-  border-radius: 4px;
-  font-size: .78rem;
-  transition: background .12s;
-  white-space: nowrap;
-}
 .btn-ghost:hover { background: #f1f5f9; color: var(--clr-text); }
 body.dark .btn-ghost:hover { background: #1a2a44; }
 
