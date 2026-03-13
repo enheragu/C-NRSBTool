@@ -3,7 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="page_title">C-NRSBTool — HDI Logistic Regression</title>
+  <script>
+    (function () {
+      var p = window.location.pathname;
+      if (p === '/C-NRSBTool') {
+        window.location.replace('/C-NRSBTool/' + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
+  <title data-i18n="page_title">C-NRSBTool — cross-national research selection bias tool with HDI (Human Development Index) Logistic Regression</title>
+  <meta id="meta-description" name="description" content="Analyze country sample selection bias with HDI (human development index), logistic regression, ROC curve, and interactive country selection map.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#58a6ff">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="C-NRSBTool">
+  <meta id="meta-og-url" property="og:url" content="https://enheragu.github.io/C-NRSBTool/">
+  <meta id="meta-og-locale" property="og:locale" content="en_GB">
+  <meta id="meta-og-title" property="og:title" content="C-NRSBTool — HDI Logistic Regression">
+  <meta id="meta-og-description" property="og:description" content="Analyze country sample selection bias with HDI (human development index), logistic regression, ROC curve, and interactive country selection map.">
+  <meta property="og:image" content="https://enheragu.github.io/C-NRSBTool/assets/og-image.svg">
+  <meta property="og:image:alt" content="C-NRSBTool — selection bias analysis with HDI and logistic regression">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta id="meta-twitter-title" name="twitter:title" content="C-NRSBTool — HDI Logistic Regression">
+  <meta id="meta-twitter-description" name="twitter:description" content="Analyze country sample selection bias with HDI, logistic regression, ROC curve, and interactive country selection map.">
+  <meta name="twitter:image" content="https://enheragu.github.io/C-NRSBTool/assets/og-image.svg">
+  <link rel="canonical" href="https://enheragu.github.io/C-NRSBTool/">
+  <link rel="alternate" hreflang="x-default" href="https://enheragu.github.io/C-NRSBTool/">
+  <link rel="alternate" hreflang="en" href="https://enheragu.github.io/C-NRSBTool/en/">
+  <link rel="alternate" hreflang="es" href="https://enheragu.github.io/C-NRSBTool/es/">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "C-NRSBTool",
+    "url": "https://enheragu.github.io/C-NRSBTool/",
+    "applicationCategory": "ResearchApplication",
+    "operatingSystem": "Any",
+    "inLanguage": ["en", "es"],
+    "description": "Analyze country selection bias with Human Development Index (HDI), logistic regression, and ROC curves.",
+    "author": {
+      "@type": "Person",
+      "name": "Enrique Heredia-Aguado"
+    }
+  }
+  </script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3ZY4LBWQB3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3ZY4LBWQB3');
+  </script>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -45,10 +100,10 @@
         </button>
         <div class="lang-switcher" role="group" aria-label="Language selector" onclick="App.toggleLang()">
           <button id="btn-en" class="lang-btn active" type="button">
-            <span aria-hidden="true">🇬🇧</span><span>EN</span>
+            <span class="flag-icon flag-gb" aria-hidden="true"></span><span>EN</span>
           </button>
           <button id="btn-es" class="lang-btn" type="button">
-            <span aria-hidden="true">🇪🇸</span><span>ES</span>
+            <span class="flag-icon flag-es" aria-hidden="true"></span><span>ES</span>
           </button>
         </div>
       </div>
@@ -59,7 +114,7 @@
   <div class="content-shell">
     <section class="intro-panel">
       <h2 data-i18n="intro_title">About this tool</h2>
-      <p data-i18n="intro_text">
+      <p data-i18n-html="intro_text_html">
         This tool helps researchers detect and quantify selection bias in cross-national studies —it may be used to check whether data availability is systematically related to countries' development levels. Thus, it addresses a widespread but often overlooked methodological problem: assuming missing data is random when it may be actually related to national capacity to collect and report statistics.
       </p>
     </section>

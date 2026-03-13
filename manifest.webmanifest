@@ -1,0 +1,11 @@
+{
+  "name": "C-NRSBTool",
+  "short_name": "C-NRSBTool",
+  "description": "Analyze country selection bias with HDI, logistic regression and ROC curves.",
+  "lang": "en",
+  "start_url": "/C-NRSBTool/",
+  "scope": "/C-NRSBTool/",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#58a6ff"
+}

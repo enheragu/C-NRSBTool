@@ -6,7 +6,8 @@ const App = (() => {
 
   // ── State ─────────────────────────────────────────────────────────
   const _selected = new Set();   // ISO-3 codes currently selected
-  let _theme = localStorage.getItem('theme') || 'light';
+  const _savedTheme = localStorage.getItem('theme');
+  let _theme = _savedTheme || _preferredTheme();
 
   // ── Initialisation ────────────────────────────────────────────────
   async function init() {
@@ -47,8 +48,36 @@ const App = (() => {
 
     // Apply initial language
     I18n.applyToDOM();
+    const urlLang = _readLangFromUrl();
+    if (urlLang) setLang(urlLang);
     _applyTheme();
     _renderFooterMeta();
+
+    if (!_savedTheme && window.matchMedia) {
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const applySystemTheme = e => {
+        if (localStorage.getItem('theme')) return;
+        _theme = e.matches ? 'dark' : 'light';
+        _applyTheme();
+      };
+      if (typeof media.addEventListener === 'function') {
+        media.addEventListener('change', applySystemTheme);
+      } else if (typeof media.addListener === 'function') {
+        media.addListener(applySystemTheme);
+      }
+    }
+  }
+
+  function _preferredTheme() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  }
+
+  function _readLangFromUrl() {
+    const params = new URLSearchParams(window.location.search || '');
+    const lang = (params.get('lang') || '').toLowerCase();
+    return (lang === 'en' || lang === 'es') ? lang : null;
   }
 
   // ── Country toggle (shared by map clicks and checkboxes) ──────────

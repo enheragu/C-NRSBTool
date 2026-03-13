@@ -6,10 +6,12 @@ const I18n = (() => {
   // ── Translations ─────────────────────────────────────────────────
   const TRANSLATIONS = {
     en: {
-      page_title:          'C-NRSBTool — HDI Logistic Regression',
+      page_title:          'C-NRSBTool — Country Sample Selection Bias Analysis by Human Development Index (HDI)',
+      meta_description:    'Analyze whether a country sample is biased by Human Development Index (HDI), and refine the assessment with logistic regression, ROC curve, and interactive country selection.',
       site_title:          'C-NRSBTool',
-      site_subtitle:       'Explore whether your country list correlates with the Human Development Index',
-      intro_title:         'About this tool',
+      site_subtitle:       'Tool to analyze country sample selection bias with HDI, logistic regression, ROC curve, and interactive country selection.',
+      intro_title:         'Country selection bias analysis tool',
+      intro_text_html:     'This tool helps researchers <strong>detect and quantify selection bias in cross-national studies</strong>. It can be used to assess whether <strong>data availability is systematically related to countries\' Human Development Index (HDI)</strong>. In that sense, it addresses a widespread but often overlooked methodological problem: <strong>assuming missing data is random when it may actually be related to national capacity to collect and report statistics</strong>.',
       intro_text:          "This tool helps researchers detect and quantify selection bias in cross-national studies —it may be used to check whether data availability is systematically related to countries' development levels. Thus, it addresses a widespread but often overlooked methodological problem: assuming missing data is random when it may be actually related to national capacity to collect and report statistics.",
       theme_btn_dark:      'Dark',
       theme_btn_light:     'Light',
@@ -93,10 +95,12 @@ const I18n = (() => {
     },
 
     es: {
-      page_title:          'C-NRSBTool — Regresión Logística con IDH',
+      page_title:          'C-NRSBTool — Herramienta de análisis del sesgo de selección muestral por Índice de Desarrollo Humano (IDH)',
+      meta_description:    'Analiza si una muestra de países está sesgada por el Índice de Desarrollo Humano (IDH) y afina el análisis con regresión logística, curva ROC y selección interactiva.',
       site_title:          'C-NRSBTool',
-      site_subtitle:       'Analiza si tu lista de países correlaciona con el Índice de Desarrollo Humano',
-      intro_title:         '¿Por qué esta herramienta?',
+      site_subtitle:       'Analiza el sesgo de selección de países con IDH, regresión logística, curva ROC y selección interactiva.',
+      intro_title:         'Herramienta para analizar sesgo de selección de países',
+      intro_text_html:     'Esta herramienta ayuda a <strong>detectar y cuantificar el sesgo de selección en estudios transnacionales</strong>. Sirve para comprobar si <strong>la disponibilidad de los datos está relacionada de forma sistemática con el Índice de Desarrollo Humano (IDH)</strong> de los países. Así, aborda un problema metodológico muy frecuente pero a menudo ignorado: <strong>asumir que la pérdida de datos es aleatoria cuando puede estar vinculada a la capacidad nacional para recopilar y reportar estadísticas</strong>.',
       intro_text:          'Esta herramienta está pensada para ayudar a investigadores a detectar y cuantificar el sesgo de selección en estudios transnacionales; su objetivo es comprobar si la disponibilidad de los datos está relacionada con los niveles de desarrollo de los países. Así, aborda un problema metodológico generalizado pero a menudo ignorado: asumir que la pérdida de datos es aleatoria cuando puede estar relacionada con la capacidad nacional para reunir y reportar las estadísticas.',
       theme_btn_dark:      'Oscuro',
       theme_btn_light:     'Claro',
@@ -181,7 +185,7 @@ const I18n = (() => {
   };
 
   // ── State ─────────────────────────────────────────────────────────
-  let _lang = 'en';
+  let _lang = document.documentElement.lang === 'es' ? 'es' : 'en';
 
   // ── Public API ────────────────────────────────────────────────────
   function setLang(lang) {
@@ -206,10 +210,31 @@ const I18n = (() => {
     document.querySelectorAll('[data-i18n]').forEach(el => {
       el.textContent = t(el.dataset.i18n);
     });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       el.placeholder = t(el.dataset.i18nPlaceholder);
     });
     document.title = t('page_title');
+    document.documentElement.lang = _lang;
+    const metaDescription = document.getElementById('meta-description');
+    if (metaDescription) metaDescription.setAttribute('content', t('meta_description'));
+    const ogTitle = document.getElementById('meta-og-title');
+    if (ogTitle) ogTitle.setAttribute('content', t('page_title'));
+    const ogDescription = document.getElementById('meta-og-description');
+    if (ogDescription) ogDescription.setAttribute('content', t('meta_description'));
+    const ogLocale = document.getElementById('meta-og-locale');
+    if (ogLocale) ogLocale.setAttribute('content', _lang === 'es' ? 'es_ES' : 'en_GB');
+    const ogUrl = document.getElementById('meta-og-url');
+    if (ogUrl) {
+      const langPath = _lang === 'es' ? '/es/' : '/en/';
+      ogUrl.setAttribute('content', `https://enheragu.github.io/C-NRSBTool${langPath}`);
+    }
+    const twitterTitle = document.getElementById('meta-twitter-title');
+    if (twitterTitle) twitterTitle.setAttribute('content', t('page_title'));
+    const twitterDescription = document.getElementById('meta-twitter-description');
+    if (twitterDescription) twitterDescription.setAttribute('content', t('meta_description'));
     // Language button states
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.id === `btn-${_lang}`);
