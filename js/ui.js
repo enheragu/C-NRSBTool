@@ -25,6 +25,7 @@ const UI = (() => {
   let _scatterChart = null;
   let _rocChart     = null;
   let _modalChart   = null;
+  let _modalKind = null;
   let _toggleHandler = null;
   let _lastResult = null;
   let _modalDefaults = null;
@@ -308,6 +309,26 @@ const UI = (() => {
     });
   }
 
+  function _chartTheme() {
+    const dark = document.body.classList.contains('dark');
+    return dark
+      ? { text: '#f0f6fc', grid: 'rgba(230, 237, 243, 0.22)' }
+      : { text: '#334155', grid: 'rgba(148, 163, 184, 0.28)' };
+  }
+
+  function _linearScale(title, min, max) {
+    const theme = _chartTheme();
+    return {
+      type: 'linear',
+      title: { display: true, text: title, color: theme.text },
+      min,
+      max,
+      ticks: { color: theme.text },
+      grid: { color: theme.grid },
+      border: { color: theme.grid },
+    };
+  }
+
   // Scatter + sigmoid chart
   function _scatterDatasets(r, pointRadius = 3) {
     const selPoints  = r.samples.filter(s => s.label === 1).map(s => ({
@@ -399,6 +420,7 @@ const UI = (() => {
           legend: {
             position: 'top',
             labels: {
+              color: _chartTheme().text,
               filter: (legendItem, data) => !data.datasets[legendItem.datasetIndex]?.hideFromLegend,
             },
           },
@@ -410,8 +432,8 @@ const UI = (() => {
           },
         },
         scales: {
-          x: { title: { display: true, text: I18n.t('chart_x') }, min: 0, max: 1.0 },
-          y: { title: { display: true, text: I18n.t('chart_y') }, min: -0.06, max: 1.06 },
+          x: _linearScale(I18n.t('chart_x'), 0, 1.0),
+          y: _linearScale(I18n.t('chart_y'), -0.06, 1.06),
         },
       },
     });
@@ -470,7 +492,7 @@ const UI = (() => {
           axis: 'xy',
         },
         plugins: {
-          legend: { position: 'top' },
+          legend: { position: 'top', labels: { color: _chartTheme().text } },
           tooltip: {
             filter: ctx => ctx.datasetIndex === 0,
             callbacks: {
@@ -479,8 +501,8 @@ const UI = (() => {
           },
         },
         scales: {
-          x: { type: 'linear', title: { display: true, text: I18n.t('roc_x') }, min: 0, max: 1 },
-          y: { type: 'linear', title: { display: true, text: I18n.t('roc_y') }, min: 0, max: 1 },
+          x: _linearScale(I18n.t('roc_x'), 0, 1),
+          y: _linearScale(I18n.t('roc_y'), 0, 1),
         },
       },
     });
@@ -505,6 +527,7 @@ const UI = (() => {
 
     const ctx = canvas.getContext('2d');
     const isScatter = kind === 'scatter';
+    _modalKind = kind;
     titleEl.textContent = I18n.t(isScatter ? 'chart_modal_scatter' : 'chart_modal_roc');
     _modalDefaults = isScatter
       ? { xMin: 0, xMax: 1.0, yMin: -0.06, yMax: 1.06 }
@@ -534,6 +557,7 @@ const UI = (() => {
           legend: {
             position: 'top',
             labels: {
+              color: _chartTheme().text,
               filter: (legendItem, data) => !data.datasets[legendItem.datasetIndex]?.hideFromLegend,
             },
           },
@@ -558,12 +582,12 @@ const UI = (() => {
         },
         scales: isScatter
           ? {
-              x: { title: { display: true, text: I18n.t('chart_x') }, min: 0, max: 1.0 },
-              y: { title: { display: true, text: I18n.t('chart_y') }, min: -0.06, max: 1.06 },
+              x: _linearScale(I18n.t('chart_x'), 0, 1.0),
+              y: _linearScale(I18n.t('chart_y'), -0.06, 1.06),
             }
           : {
-              x: { type: 'linear', title: { display: true, text: I18n.t('roc_x') }, min: 0, max: 1 },
-              y: { type: 'linear', title: { display: true, text: I18n.t('roc_y') }, min: 0, max: 1 },
+              x: _linearScale(I18n.t('roc_x'), 0, 1),
+              y: _linearScale(I18n.t('roc_y'), 0, 1),
             },
       },
     });
@@ -888,6 +912,16 @@ const UI = (() => {
       _modalChart = null;
     }
     _modalDefaults = null;
+    _modalKind = null;
+  }
+
+  function refreshCharts() {
+    if (!_lastResult) return;
+    _renderScatter(_lastResult);
+    _renderROC(_lastResult);
+    if (_modalKind) {
+      openChartModal(_modalKind);
+    }
   }
 
   // ── Public API ────────────────────────────────────────────────────
@@ -903,5 +937,6 @@ const UI = (() => {
     closeChartModal,
     showResults,
     hideResults,
+    refreshCharts,
   };
 })();

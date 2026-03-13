@@ -309,6 +309,7 @@ const App = (() => {
   function _applyTheme() {
     document.body.classList.toggle('dark', _theme === 'dark');
     _refreshThemeButton();
+    UI.refreshCharts();
   }
 
   function _refreshThemeButton() {

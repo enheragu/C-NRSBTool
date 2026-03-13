@@ -1,7 +1,22 @@
 # C-NRSBTool
 
-C-NRSBTool is a web tool to explore potential selection bias in country samples using the Human Development Index (HDI). It lets you select countries (map, list, or text input), run a logistic regression, and visualize results with a sigmoid curve and ROC curve.
+C-NRSBTool is a static web application to explore potential selection bias in country samples using the Human Development Index (HDI).
+
+It lets you:
+
+- select countries from the map,
+- select them from a searchable list,
+- paste them as free text,
+- run a logistic regression,
+- inspect the fitted sigmoid curve and ROC curve,
+- export results.
 
 Web version:
 
 - https://enheragu.github.io/C-NRSBTool/
+
+---
+
+Idea: [Alejandro Rujano](https://fantasmamecanico.wordpress.com/)
+
+Author: [Enrique Heredia-Aguado](https://enheragu.github.io/)
