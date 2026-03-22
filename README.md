@@ -2,8 +2,8 @@
 
 > [!WARNING]
 > This standalone repository/page is in **deprecated mode**.
-> Active maintained URL: **https://enheragu.github.io/stat-tools/C-NRSBTool/**
-> Unified tools landing: **https://enheragu.github.io/stat-tools/**
+> Active maintained URL: **https://enheragu.github.io/psychometric-tools/C-NRSBTool/**
+> Unified tools landing: **https://enheragu.github.io/psychometric-tools/**
 
 C-NRSBTool is a static web application to explore potential selection bias in country samples using the Human Development Index (HDI).
 
@@ -19,7 +19,7 @@ It lets you:
 Web version:
 
 - ~~https://enheragu.github.io/C-NRSBTool/~~
-- https://enheragu.github.io/stat-tools/C-NRSBTool/
+- https://enheragu.github.io/psychometric-tools/C-NRSBTool/
 
 ---
 
